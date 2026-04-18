@@ -1,0 +1,72 @@
+{
+    "module": "sys_user",
+    "description": "用户管理模块",
+    "features": [
+        {
+            "id": "F001",
+            "name": "用户列表分页查询",
+            "description": "支持按用户名、状态、部门筛选，分页展示",
+            "status": "pending",
+            "agent": "coding",
+            "priority": "high"
+        },
+        {
+            "id": "F002",
+            "name": "用户新增",
+            "description": "创建新用户，包含密码加密、角色分配",
+            "status": "pending",
+            "agent": "crud_generator",
+            "priority": "high"
+        },
+        {
+            "id": "F003",
+            "name": "用户编辑",
+            "description": "更新用户信息，支持修改角色分配",
+            "status": "pending",
+            "agent": "crud_generator",
+            "priority": "high"
+        },
+        {
+            "id": "F004",
+            "name": "用户删除(逻辑删除)",
+            "description": "软删除，更新 deleted 字段",
+            "status": "pending",
+            "agent": "crud_generator",
+            "priority": "high"
+        },
+        {
+            "id": "F005",
+            "name": "密码策略校验",
+            "description": "密码复杂度、长度、历史密码检查",
+            "status": "pending",
+            "agent": "coding",
+            "priority": "medium"
+        },
+        {
+            "id": "F006",
+            "name": "用户角色分配",
+            "description": "为用户分配多个角色，同步更新缓存",
+            "status": "pending",
+            "agent": "rbac_agent",
+            "priority": "high"
+        },
+        {
+            "id": "F007",
+            "name": "用户导出Excel",
+            "description": "支持按条件导出用户列表为Excel",
+            "status": "pending",
+            "agent": "coding",
+            "priority": "low"
+        },
+        {
+            "id": "F008",
+            "name": "重置密码",
+            "description": "管理员重置用户密码，发送通知",
+            "status": "pending",
+            "agent": "coding",
+            "priority": "medium"
+        }
+    ],
+    "progress": 0,
+    "lastUpdated": "2026-04-18T18:43:00"
+}
