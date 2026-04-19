@@ -1,0 +1,40 @@
+# Local dev: MySQL 8 + Redis 7
+# Usage: docker compose up -d
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mis-mysql
+    restart: unless-stopped
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-devroot}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mis_admin}
+      MYSQL_USER: ${MYSQL_USER:-mis}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mis123}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mis_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: mis-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - mis_redis_data:/data
+
+volumes:
+  mis_mysql_data:
+  mis_redis_data:
