@@ -44,13 +44,13 @@ public class GlobalExceptionHandler {
                 message = field.getDefaultMessage();
             }
         }
-        return Result.fail(400, message != null ? message : "参数错误");
+        return Result.fail(400, message != null ? message : "Invalid request parameters");
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleAny(Exception ex) {
         log.error("Unhandled error", ex);
-        return Result.fail(500, "服务器错误");
+        return Result.fail(500, "Internal server error");
     }
 }
