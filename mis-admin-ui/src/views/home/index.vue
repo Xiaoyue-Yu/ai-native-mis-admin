@@ -28,7 +28,9 @@ const runPing = async () => {
 <template>
   <div class="page">
     <h2>首页</h2>
-    <p class="hint">点击下方按钮调用后端 <code>GET /api/admin/ping</code>（经 Vite 代理）。</p>
+    <p class="hint">
+      点击下方按钮调用后端 <code>GET /api/admin/ping</code>。用户管理能力已从顶部导航接入。
+    </p>
     <el-space>
       <el-button type="primary" :loading="loading" @click="runPing">Ping 后端</el-button>
     </el-space>

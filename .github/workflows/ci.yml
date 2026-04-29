@@ -1,0 +1,64 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Grant execute permission for Maven Wrapper
+        run: chmod +x mvnw
+
+      - name: Run backend tests
+        run: ./mvnw clean test
+
+      - name: Print JaCoCo coverage summary
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          report = ET.parse("mis-system/target/site/jacoco/jacoco.xml").getroot()
+          target = None
+          for class_node in report.iter("class"):
+              if class_node.attrib.get("name") == "com/creator/mis/system/service/impl/SysUserServiceImpl":
+                  target = class_node
+                  break
+
+          if target is None:
+              raise SystemExit("SysUserServiceImpl coverage block not found")
+
+          counters = {counter.attrib["type"]: counter.attrib for counter in target.findall("counter")}
+
+          def ratio(counter_type: str):
+              missed = int(counters[counter_type]["missed"])
+              covered = int(counters[counter_type]["covered"])
+              total = missed + covered
+              value = 0.0 if total == 0 else covered / total * 100
+              return missed, covered, value
+
+          line_missed, line_covered, line_ratio = ratio("LINE")
+          branch_missed, branch_covered, branch_ratio = ratio("BRANCH")
+
+          print("JaCoCo coverage for SysUserServiceImpl")
+          print(f"LINE:   covered={line_covered} missed={line_missed} ratio={line_ratio:.2f}%")
+          print(f"BRANCH: covered={branch_covered} missed={branch_missed} ratio={branch_ratio:.2f}%")
+          PY
