@@ -1,4 +1,12 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "interactive"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.maven.enabled": true,
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Users\\HUAWEI\\.vscode\\extensions\\redhat.java-1.54.0-win32-x64\\jre\\21.0.10-win32-x86_64",
+      "default": true
+    }
+  ]
 }
