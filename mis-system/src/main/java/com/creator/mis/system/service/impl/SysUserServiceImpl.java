@@ -1,7 +1,6 @@
 package com.creator.mis.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.creator.mis.common.exception.BusinessException;
 import com.creator.mis.system.domain.dto.user.SysUserCreateRequest;
 import com.creator.mis.system.domain.dto.user.SysUserUpdateRequest;
@@ -94,12 +93,11 @@ public class SysUserServiceImpl implements ISysUserService {
             throw new BusinessException(404, "User not found");
         }
 
-        int updated = sysUserMapper.update(
-            null,
-            new LambdaUpdateWrapper<SysUser>()
-                .eq(SysUser::getId, id)
-                .set(SysUser::getDeleted, 1)
-        );
+        SysUser user = new SysUser();
+        user.setId(id);
+        user.setDeleted(1);
+
+        int updated = sysUserMapper.updateById(user);
         if (updated != 1) {
             throw new BusinessException(500, "Delete user failed");
         }
