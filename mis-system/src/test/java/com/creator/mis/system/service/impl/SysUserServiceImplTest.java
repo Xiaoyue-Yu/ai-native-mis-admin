@@ -222,11 +222,14 @@ class SysUserServiceImplTest {
         SysUser existing = new SysUser();
         existing.setId(7L);
         when(sysUserMapper.selectById(7L)).thenReturn(existing);
-        when(sysUserMapper.update(any(), any())).thenReturn(1);
+        when(sysUserMapper.updateById(any(SysUser.class))).thenReturn(1);
 
         sysUserService.deleteUser(7L);
 
-        verify(sysUserMapper).update(any(), any());
+        ArgumentCaptor<SysUser> userCaptor = ArgumentCaptor.forClass(SysUser.class);
+        verify(sysUserMapper).updateById(userCaptor.capture());
+        assertEquals(7L, userCaptor.getValue().getId());
+        assertEquals(1, userCaptor.getValue().getDeleted());
     }
 
     @Test
@@ -244,7 +247,7 @@ class SysUserServiceImplTest {
         SysUser existing = new SysUser();
         existing.setId(10L);
         when(sysUserMapper.selectById(10L)).thenReturn(existing);
-        when(sysUserMapper.update(any(), any())).thenReturn(0);
+        when(sysUserMapper.updateById(any(SysUser.class))).thenReturn(0);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> sysUserService.deleteUser(10L));
 
