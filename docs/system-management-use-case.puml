@@ -1,0 +1,121 @@
+@startuml
+title MIS系统管理模块 用例图
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "超级管理员" as SuperAdmin
+actor "普通管理员" as Admin
+actor "安全审计员" as Auditor
+actor "普通用户" as User
+actor "运维人员" as Ops
+actor "OAuth2身份提供商" as OAuth
+actor "监控平台" as Monitor
+
+rectangle "系统管理模块" {
+  usecase "账号密码登录" as UC_Login
+  usecase "OAuth2第三方登录" as UC_OAuthLogin
+  usecase "注销登录" as UC_Logout
+  usecase "维护个人资料" as UC_Profile
+  usecase "修改密码" as UC_ChangePwd
+
+  usecase "用户分页查询" as UC_UserList
+  usecase "新增用户" as UC_UserCreate
+  usecase "编辑用户" as UC_UserUpdate
+  usecase "逻辑删除用户" as UC_UserDelete
+  usecase "查询用户详情" as UC_UserDetail
+  usecase "启用/禁用/锁定用户" as UC_UserStatus
+  usecase "重置密码" as UC_ResetPwd
+  usecase "导入/导出用户Excel" as UC_UserExcel
+  usecase "分配用户角色" as UC_AssignRole
+
+  usecase "角色CRUD" as UC_RoleCrud
+  usecase "配置菜单/按钮/API权限" as UC_MenuPerm
+  usecase "配置数据权限" as UC_DataPerm
+  usecase "分配角色权限" as UC_AssignPerm
+  usecase "权限校验" as UC_Authz
+
+  usecase "部门树管理" as UC_Dept
+  usecase "岗位管理" as UC_Post
+  usecase "人员调动" as UC_Transfer
+  usecase "组织架构可视化" as UC_OrgView
+
+  usecase "系统参数配置" as UC_Config
+  usecase "数据字典管理" as UC_Dict
+  usecase "系统公告管理" as UC_Notice
+  usecase "主题/样式配置" as UC_Theme
+
+  usecase "查询操作日志" as UC_OperLog
+  usecase "查询登录日志" as UC_LoginLog
+  usecase "查询异常日志" as UC_ErrorLog
+  usecase "审计追踪" as UC_AuditTrail
+
+  usecase "服务健康检查" as UC_Health
+  usecase "在线用户管理" as UC_Online
+  usecase "系统资源监控" as UC_Resource
+  usecase "API调用统计与限流" as UC_ApiLimit
+}
+
+User --> UC_Login
+User --> UC_OAuthLogin
+User --> UC_Logout
+User --> UC_Profile
+User --> UC_ChangePwd
+OAuth --> UC_OAuthLogin
+
+Admin --> UC_UserList
+Admin --> UC_UserCreate
+Admin --> UC_UserUpdate
+Admin --> UC_UserDelete
+Admin --> UC_UserDetail
+Admin --> UC_UserStatus
+Admin --> UC_ResetPwd
+Admin --> UC_UserExcel
+Admin --> UC_AssignRole
+Admin --> UC_Dept
+Admin --> UC_Post
+Admin --> UC_Transfer
+Admin --> UC_OrgView
+Admin --> UC_Dict
+
+SuperAdmin --> UC_RoleCrud
+SuperAdmin --> UC_MenuPerm
+SuperAdmin --> UC_DataPerm
+SuperAdmin --> UC_AssignPerm
+SuperAdmin --> UC_Config
+SuperAdmin --> UC_Notice
+SuperAdmin --> UC_Theme
+SuperAdmin --> UC_ApiLimit
+
+Auditor --> UC_OperLog
+Auditor --> UC_LoginLog
+Auditor --> UC_ErrorLog
+Auditor --> UC_AuditTrail
+
+Ops --> UC_Health
+Ops --> UC_Online
+Ops --> UC_Resource
+Ops --> UC_ApiLimit
+Monitor --> UC_Health
+Monitor --> UC_Resource
+
+UC_UserCreate .> UC_AssignRole : <<include>>
+UC_UserUpdate .> UC_AssignRole : <<include>>
+UC_AssignPerm .> UC_MenuPerm : <<include>>
+UC_AssignPerm .> UC_DataPerm : <<include>>
+UC_OAuthLogin .> UC_Login : <<extend>>
+UC_ResetPwd .> UC_ChangePwd : <<extend>>
+UC_Authz .> UC_MenuPerm : <<include>>
+UC_Authz .> UC_DataPerm : <<include>>
+
+note right of UC_UserCreate
+当前仓库已实现：
+新增用户、BCrypt加密、
+用户名唯一性、角色关联保存
+end note
+
+note right of UC_UserList
+feature_list.json 中 F001
+仍为 pending
+end note
+@enduml
