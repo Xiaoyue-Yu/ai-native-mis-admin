@@ -1,0 +1,87 @@
+@startuml
+title 用户管理核心流程 活动图
+skinparam activity {
+  BackgroundColor #F8FBFF
+  BorderColor #315B7D
+  FontColor #1F2933
+}
+
+start
+:管理员进入用户管理页面;
+:选择操作类型;
+
+if (新增用户?) then (是)
+  :填写用户名、密码、昵称、邮箱、手机号、部门、状态、角色;
+  :前端表单校验;
+  if (表单合法?) then (是)
+    :POST /user/add;
+    :后端DTO参数校验;
+    if (用户名唯一?) then (是)
+      :BCrypt加密密码;
+      :写入 sys_user;
+      :删除旧角色关联(新用户无旧数据);
+      :去重角色ID并写入 sys_user_role;
+      :返回新用户ID;
+      :前端插入本页临时表格并提示成功;
+    else (否)
+      :返回业务异常 Username already exists;
+      :前端展示失败提示;
+    endif
+  else (否)
+    :提示必填、长度、邮箱或手机号格式错误;
+  endif
+
+elseif (编辑用户?) then (是)
+  :输入或选择用户ID;
+  :GET /user/detail/{id};
+  if (用户存在?) then (是)
+    :回填用户资料和角色ID列表;
+    :管理员修改昵称、邮箱、手机号、部门、状态、角色等信息;
+    :前端表单校验;
+    if (表单合法?) then (是)
+      :PUT /user/update;
+      :后端查询用户并开启事务;
+      :更新 sys_user 非用户名/密码字段;
+      :删除该用户旧角色关联;
+      :去重角色ID并重建 sys_user_role;
+      :返回成功;
+      :前端更新本页临时表格并提示成功;
+    else (否)
+      :提示字段校验错误;
+    endif
+  else (否)
+    :返回 User not found;
+    :前端展示失败提示;
+  endif
+
+elseif (删除用户?) then (是)
+  :管理员点击删除;
+  :前端确认逻辑删除;
+  if (确认删除?) then (是)
+    :DELETE /user/delete/{id};
+    :后端查询用户;
+    if (用户存在?) then (是)
+      :设置 deleted = 1;
+      :返回成功;
+      :前端移除本页临时表格行;
+    else (否)
+      :返回 User not found;
+    endif
+  else (否)
+    :取消操作;
+  endif
+
+else (查询详情)
+  :输入用户ID;
+  :GET /user/detail/{id};
+  if (用户存在?) then (是)
+    :返回用户基础资料、创建更新时间、角色ID列表;
+    :前端展示或回填详情;
+  else (否)
+    :返回 User not found;
+  endif
+endif
+
+:记录操作日志(规划需求，AOP待实现);
+stop
+@enduml
