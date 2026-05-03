@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIS 系统管理 - 用户管理高保真原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            primaryDark: '#1d4ed8',
+            ink: '#0f172a'
+          },
+          boxShadow: {
+            soft: '0 18px 50px rgba(15, 23, 42, 0.08)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+    .modal-backdrop { background: rgba(15, 23, 42, 0.52); backdrop-filter: blur(6px); }
+    .field-error { display: none; }
+    .invalid .field-error { display: block; }
+    .invalid input, .invalid select, .invalid textarea { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, .12); }
+    .table-row-selected { background: #eff6ff; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800">
+  <div id="toast" class="fixed right-6 top-6 z-[80] hidden rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-emerald-700 shadow-soft">
+    <span class="mr-2">✓</span><span id="toastText">保存成功</span>
+  </div>
+
+  <div class="flex min-h-screen">
+    <aside class="hidden w-64 shrink-0 border-r border-slate-200 bg-ink text-white lg:block">
+      <div class="flex h-16 items-center gap-3 border-b border-white/10 px-6">
+        <div class="grid h-9 w-9 place-items-center rounded-xl bg-blue-500 font-bold">MIS</div>
+        <div>
+          <div class="font-semibold">系统管理平台</div>
+          <div class="text-xs text-slate-400">System Admin</div>
+        </div>
+      </div>
+      <nav class="space-y-1 px-3 py-5 text-sm">
+        <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-300 hover:bg-white/10 hover:text-white" href="#">⌂ 首页工作台</a>
+        <div class="px-3 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">系统管理</div>
+        <a class="flex items-center justify-between rounded-xl bg-blue-600 px-3 py-2.5 text-white shadow-lg shadow-blue-950/20" href="#">
+          <span class="flex items-center gap-3">👤 用户管理</span>
+          <span class="rounded-full bg-white/20 px-2 py-0.5 text-xs">sys:user:list</span>
+        </a>
+        <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-300 hover:bg-white/10 hover:text-white" href="#">🛡️ 角色权限</a>
+        <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-300 hover:bg-white/10 hover:text-white" href="#">🏢 部门管理</a>
+        <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-300 hover:bg-white/10 hover:text-white" href="#">📚 数据字典</a>
+        <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-300 hover:bg-white/10 hover:text-white" href="#">🧾 操作日志</a>
+        <a class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-300 hover:bg-white/10 hover:text-white" href="#">⚙️ 系统配置</a>
+      </nav>
+    </aside>
+
+    <main class="min-w-0 flex-1">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div>
+            <div class="text-xs text-slate-500">系统管理 / 用户管理</div>
+            <h1 class="text-lg font-semibold text-slate-950">用户管理</h1>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onclick="showToast('已刷新权限缓存示意')">刷新缓存</button>
+            <button class="rounded-full bg-slate-950 px-4 py-2 text-sm text-white hover:bg-slate-800">超级管理员</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="space-y-5 p-4 sm:p-6 lg:p-8">
+        <div class="grid gap-4 md:grid-cols-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">用户总数</div>
+            <div class="mt-2 text-3xl font-bold text-slate-950">1,286</div>
+            <div class="mt-2 text-xs text-emerald-600">正常用户 1,214</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">启用 / 禁用</div>
+            <div class="mt-2 text-3xl font-bold text-slate-950">94.4%</div>
+            <div class="mt-2 text-xs text-amber-600">禁用 42，锁定 30</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">角色关联</div>
+            <div class="mt-2 text-3xl font-bold text-slate-950">3.2</div>
+            <div class="mt-2 text-xs text-slate-500">平均每用户角色数</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="text-sm text-slate-500">接口响应目标</div>
+            <div class="mt-2 text-3xl font-bold text-slate-950">P99&lt;500ms</div>
+            <div class="mt-2 text-xs text-blue-600">分页列表 /api/admin/user/list</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h2 class="font-semibold text-slate-950">查询筛选</h2>
+              <p class="text-sm text-slate-500">支持按用户名、状态、部门筛选，预留手机号、角色、时间范围扩展。</p>
+            </div>
+            <button id="toggleFilterBtn" class="text-sm font-medium text-blue-600 hover:text-blue-700" onclick="toggleAdvancedFilter()">展开高级筛选</button>
+          </div>
+          <div class="grid gap-4 md:grid-cols-4">
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-slate-700">用户名 username</span>
+              <input class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="请输入用户名 / 昵称" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-slate-700">状态 status</span>
+              <select class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <option>全部</option>
+                <option>启用</option>
+                <option>禁用</option>
+                <option>锁定</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-slate-700">部门 dept_id</span>
+              <select class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <option>全部部门</option>
+                <option>总公司</option>
+                <option>技术部 / 前端组</option>
+                <option>技术部 / 后端组</option>
+                <option>市场部</option>
+                <option>财务部</option>
+              </select>
+            </label>
+            <div class="flex items-end gap-2">
+              <button class="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700" onclick="showLoadingState()">查询</button>
+              <button class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50" onclick="showToast('筛选条件已重置')">重置</button>
+            </div>
+          </div>
+          <div id="advancedFilter" class="mt-4 hidden grid gap-4 border-t border-dashed border-slate-200 pt-4 md:grid-cols-4">
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-slate-700">手机号 phone</span>
+              <input class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="13800138000" />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-slate-700">角色集合 roleIds</span>
+              <select class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <option>全部角色</option>
+                <option>超级管理员</option>
+                <option>普通管理员</option>
+                <option>普通用户</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-slate-700">创建时间</span>
+              <input type="date" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
+            </label>
+            <div class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">权限提示：按钮权限遵循 <span class="font-mono text-slate-700">sys:user:{action}</span></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div class="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="font-semibold text-slate-950">用户列表</h2>
+              <p class="text-sm text-slate-500">分页展示用户基础资料、部门归属、状态、角色关联和审计时间。</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700" onclick="openUserModal()">新增用户</button>
+              <button class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50" onclick="openImportModal()">导入</button>
+              <button class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50" onclick="showToast('已按当前条件导出用户 Excel')">导出</button>
+              <button id="batchDeleteBtn" class="rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-medium text-rose-600 opacity-50 hover:bg-rose-50" onclick="confirmBatchDelete()">批量删除</button>
+            </div>
+          </div>
+
+          <div id="loadingState" class="hidden border-b border-slate-100 p-4 text-sm text-blue-700">
+            <span class="mr-2 inline-block h-3 w-3 animate-pulse rounded-full bg-blue-500"></span>列表加载中，请稍候...
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-[1180px] w-full text-left text-sm">
+              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th class="w-12 px-5 py-3"><input id="selectAll" type="checkbox" class="rounded border-slate-300" onchange="toggleSelectAll()" /></th>
+                  <th class="px-5 py-3">ID</th>
+                  <th class="px-5 py-3">用户名 username</th>
+                  <th class="px-5 py-3">昵称 nickname</th>
+                  <th class="px-5 py-3">邮箱 email</th>
+                  <th class="px-5 py-3">手机号 phone</th>
+                  <th class="px-5 py-3">性别 sex</th>
+                  <th class="px-5 py-3">部门 dept_id</th>
+                  <th class="px-5 py-3">角色集合 roleIds</th>
+                  <th class="px-5 py-3">状态 status</th>
+                  <th class="px-5 py-3">最后登录</th>
+                  <th class="px-5 py-3">创建/更新时间</th>
+                  <th class="px-5 py-3 text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody id="userTable" class="divide-y divide-slate-100">
+                <tr class="hover:bg-slate-50">
+                  <td class="px-5 py-4"><input type="checkbox" class="row-checkbox rounded border-slate-300" onchange="updateBatchState(this)" /></td>
+                  <td class="px-5 py-4 font-mono text-slate-500">1</td>
+                  <td class="px-5 py-4">
+                    <div class="flex items-center gap-3">
+                      <img class="h-9 w-9 rounded-full object-cover" src="https://api.dicebear.com/7.x/initials/svg?seed=Admin" alt="avatar" />
+                      <div>
+                        <div class="font-medium text-slate-950">admin</div>
+                        <div class="text-xs text-slate-500">create_by: system</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-5 py-4">超级管理员</td>
+                  <td class="px-5 py-4">admin@mis.local</td>
+                  <td class="px-5 py-4">13800138000</td>
+                  <td class="px-5 py-4">未知</td>
+                  <td class="px-5 py-4">总公司</td>
+                  <td class="px-5 py-4"><span class="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">超级管理员</span></td>
+                  <td class="px-5 py-4"><button class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700" onclick="toggleStatus(this)">启用</button></td>
+                  <td class="px-5 py-4"><div>127.0.0.1</div><div class="text-xs text-slate-500">2026-05-03 16:42</div></td>
+                  <td class="px-5 py-4"><div>2026-04-18</div><div class="text-xs text-slate-500">2026-05-02</div></td>
+                  <td class="px-5 py-4">
+                    <div class="flex justify-end gap-2">
+                      <button class="text-blue-600 hover:text-blue-800" onclick="openDetailModal('admin')">详情</button>
+                      <button class="text-slate-600 hover:text-slate-900" onclick="openEditHint()">编辑</button>
+                      <button class="text-violet-600 hover:text-violet-800" onclick="openRoleModal()">分配角色</button>
+                      <button class="text-amber-600 hover:text-amber-800" onclick="confirmResetPassword()">重置密码</button>
+                      <button class="text-rose-600 hover:text-rose-800" onclick="confirmDelete('admin')">删除</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-5 py-4"><input type="checkbox" class="row-checkbox rounded border-slate-300" onchange="updateBatchState(this)" /></td>
+                  <td class="px-5 py-4 font-mono text-slate-500">2</td>
+                  <td class="px-5 py-4">
+                    <div class="flex items-center gap-3">
+                      <img class="h-9 w-9 rounded-full object-cover" src="https://api.dicebear.com/7.x/initials/svg?seed=ZhangSan" alt="avatar" />
+                      <div>
+                        <div class="font-medium text-slate-950">zhangsan</div>
+                        <div class="text-xs text-slate-500">create_by: admin</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-5 py-4">张三</td>
+                  <td class="px-5 py-4">zhangsan@example.com</td>
+                  <td class="px-5 py-4">13900139000</td>
+                  <td class="px-5 py-4">男</td>
+                  <td class="px-5 py-4">技术部 / 后端组</td>
+                  <td class="px-5 py-4"><span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">普通管理员</span></td>
+                  <td class="px-5 py-4"><button class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700" onclick="toggleStatus(this)">启用</button></td>
+                  <td class="px-5 py-4"><div>10.12.3.24</div><div class="text-xs text-slate-500">2026-05-02 09:18</div></td>
+                  <td class="px-5 py-4"><div>2026-04-28</div><div class="text-xs text-slate-500">2026-05-01</div></td>
+                  <td class="px-5 py-4">
+                    <div class="flex justify-end gap-2">
+                      <button class="text-blue-600 hover:text-blue-800" onclick="openDetailModal('zhangsan')">详情</button>
+                      <button class="text-slate-600 hover:text-slate-900" onclick="openEditHint()">编辑</button>
+                      <button class="text-violet-600 hover:text-violet-800" onclick="openRoleModal()">分配角色</button>
+                      <button class="text-amber-600 hover:text-amber-800" onclick="confirmResetPassword()">重置密码</button>
+                      <button class="text-rose-600 hover:text-rose-800" onclick="confirmDelete('zhangsan')">删除</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-5 py-4"><input type="checkbox" class="row-checkbox rounded border-slate-300" onchange="updateBatchState(this)" /></td>
+                  <td class="px-5 py-4 font-mono text-slate-500">3</td>
+                  <td class="px-5 py-4">
+                    <div class="flex items-center gap-3">
+                      <img class="h-9 w-9 rounded-full object-cover" src="https://api.dicebear.com/7.x/initials/svg?seed=LiSi" alt="avatar" />
+                      <div>
+                        <div class="font-medium text-slate-950">lisi</div>
+                        <div class="text-xs text-slate-500">create_by: admin</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-5 py-4">李四</td>
+                  <td class="px-5 py-4">lisi@example.com</td>
+                  <td class="px-5 py-4">13700137000</td>
+                  <td class="px-5 py-4">女</td>
+                  <td class="px-5 py-4">市场部</td>
+                  <td class="px-5 py-4"><span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">普通用户</span></td>
+                  <td class="px-5 py-4"><button class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600" onclick="toggleStatus(this)">禁用</button></td>
+                  <td class="px-5 py-4"><div>--</div><div class="text-xs text-slate-500">从未登录</div></td>
+                  <td class="px-5 py-4"><div>2026-04-30</div><div class="text-xs text-slate-500">2026-04-30</div></td>
+                  <td class="px-5 py-4">
+                    <div class="flex justify-end gap-2">
+                      <button class="text-blue-600 hover:text-blue-800" onclick="openDetailModal('lisi')">详情</button>
+                      <button class="text-slate-600 hover:text-slate-900" onclick="openEditHint()">编辑</button>
+                      <button class="text-violet-600 hover:text-violet-800" onclick="openRoleModal()">分配角色</button>
+                      <button class="text-amber-600 hover:text-amber-800" onclick="confirmResetPassword()">重置密码</button>
+                      <button class="text-rose-600 hover:text-rose-800" onclick="confirmDelete('lisi')">删除</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="emptyState" class="hidden p-12 text-center">
+            <div class="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-slate-100 text-3xl">∅</div>
+            <h3 class="mt-4 font-semibold text-slate-950">暂无用户数据</h3>
+            <p class="mt-1 text-sm text-slate-500">请调整筛选条件，或点击“新增用户”创建账号。</p>
+          </div>
+
+          <div class="flex flex-col gap-3 border-t border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-sm text-slate-500">已选择 <span id="selectedCount" class="font-semibold text-slate-950">0</span> 项，共 1286 条；每页 10 条</div>
+            <div class="flex items-center gap-1">
+              <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">上一页</button>
+              <button class="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white">1</button>
+              <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">2</button>
+              <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">3</button>
+              <button class="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">下一页</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="userModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" onclick="closeUserModal()"></div>
+    <div class="relative max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-soft">
+      <div class="flex items-start justify-between border-b border-slate-200 px-6 py-5">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-950">新增用户</h2>
+          <p class="mt-1 text-sm text-slate-500">保存用户名、密码、昵称、邮箱、手机号、头像、性别、状态、部门、备注和角色集合。</p>
+        </div>
+        <button class="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onclick="closeUserModal()">✕</button>
+      </div>
+      <div class="max-h-[calc(92vh-148px)] overflow-y-auto px-6 py-5">
+        <div class="mb-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+          安全提示：密码将由后端使用 BCrypt 加密存储；新增时会校验用户名唯一性，接口响应不得返回密码或 Token 密钥。
+        </div>
+        <form id="userForm" class="grid gap-5 md:grid-cols-2">
+          <label class="form-field block" data-field="username">
+            <span class="mb-1 block text-sm font-medium text-slate-700"><span class="text-rose-500">*</span> 用户名 username</span>
+            <input name="username" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="例如 zhangsan，必须唯一" />
+            <span class="field-error mt-1 text-xs text-rose-600">用户名为必填项，且不得重复。</span>
+          </label>
+          <label class="form-field block" data-field="password">
+            <span class="mb-1 block text-sm font-medium text-slate-700"><span class="text-rose-500">*</span> 密码 password</span>
+            <input name="password" type="password" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="至少 8 位，含大小写/数字/特殊字符" />
+            <span class="field-error mt-1 text-xs text-rose-600">密码至少 8 位，并建议包含大小写字母、数字和特殊字符。</span>
+          </label>
+          <label class="form-field block" data-field="nickname">
+            <span class="mb-1 block text-sm font-medium text-slate-700"><span class="text-rose-500">*</span> 昵称 nickname</span>
+            <input name="nickname" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="请输入昵称" />
+            <span class="field-error mt-1 text-xs text-rose-600">昵称不能为空。</span>
+          </label>
+          <label class="form-field block" data-field="email">
+            <span class="mb-1 block text-sm font-medium text-slate-700">邮箱 email</span>
+            <input name="email" type="email" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="name@example.com" />
+            <span class="field-error mt-1 text-xs text-rose-600">邮箱格式不正确。</span>
+          </label>
+          <label class="form-field block" data-field="phone">
+            <span class="mb-1 block text-sm font-medium text-slate-700">手机号 phone</span>
+            <input name="phone" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="11 位手机号" />
+            <span class="field-error mt-1 text-xs text-rose-600">手机号格式不正确。</span>
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium text-slate-700">头像 avatar</span>
+            <input name="avatar" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="头像 URL，可为空" />
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium text-slate-700">性别 sex</span>
+            <select name="sex" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+              <option value="0">未知（0）</option>
+              <option value="1">男（1）</option>
+              <option value="2">女（2）</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-1 block text-sm font-medium text-slate-700">状态 status</span>
+            <select name="status" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+              <option value="1">启用（1）</option>
+              <option value="0">禁用（0）</option>
+              <option value="locked">锁定（扩展状态）</option>
+            </select>
+          </label>
+          <label class="form-field block" data-field="dept">
+            <span class="mb-1 block text-sm font-medium text-slate-700"><span class="text-rose-500">*</span> 部门 dept_id</span>
+            <select name="dept" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+              <option value="">请选择部门</option>
+              <option value="100">总公司</option>
+              <option value="110">技术部 / 前端组</option>
+              <option value="120">技术部 / 后端组</option>
+              <option value="200">市场部</option>
+              <option value="300">财务部</option>
+            </select>
+            <span class="field-error mt-1 text-xs text-rose-600">请选择部门。</span>
+          </label>
+          <div class="form-field block" data-field="roles">
+            <span class="mb-2 block text-sm font-medium text-slate-700"><span class="text-rose-500">*</span> 角色集合 roleIds</span>
+            <div class="grid gap-2 rounded-xl border border-slate-200 p-3">
+              <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="roleIds" value="1" class="rounded border-slate-300" /> 超级管理员 role_id=1</label>
+              <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="roleIds" value="2" class="rounded border-slate-300" /> 普通管理员 role_id=2</label>
+              <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="roleIds" value="3" class="rounded border-slate-300" /> 普通用户 role_id=3</label>
+            </div>
+            <span class="field-error mt-1 text-xs text-rose-600">请至少选择一个角色，保存时会去重并重建关联关系。</span>
+          </div>
+          <label class="md:col-span-2 block">
+            <span class="mb-1 block text-sm font-medium text-slate-700">备注 remark</span>
+            <textarea name="remark" rows="3" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" placeholder="请输入备注，最多 500 字"></textarea>
+          </label>
+        </form>
+      </div>
+      <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
+        <div class="text-xs text-slate-500">提交接口：POST /user/add；规划路径：POST /api/admin/user/add</div>
+        <div class="flex gap-2">
+          <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium hover:bg-slate-50" onclick="closeUserModal()">取消</button>
+          <button class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700" onclick="saveUser()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" onclick="closeConfirmModal()"></div>
+    <div class="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-soft">
+      <div class="grid h-12 w-12 place-items-center rounded-2xl bg-rose-50 text-2xl text-rose-600">!</div>
+      <h2 id="confirmTitle" class="mt-4 text-lg font-semibold text-slate-950">确认删除用户吗？</h2>
+      <p id="confirmText" class="mt-2 text-sm leading-6 text-slate-500">删除将采用逻辑删除，仅更新 deleted 标记，不会物理删除记录。</p>
+      <div class="mt-6 flex justify-end gap-2">
+        <button class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50" onclick="closeConfirmModal()">取消</button>
+        <button class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-rose-700" onclick="runConfirmAction()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" onclick="closeDetailModal()"></div>
+    <div class="relative w-full max-w-2xl rounded-3xl bg-white p-6 shadow-soft">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-950">用户详情</h2>
+        <button class="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onclick="closeDetailModal()">✕</button>
+      </div>
+      <div class="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+        <div class="rounded-xl bg-slate-50 p-4"><div class="text-slate-500">用户名</div><div id="detailUsername" class="mt-1 font-medium text-slate-950">admin</div></div>
+        <div class="rounded-xl bg-slate-50 p-4"><div class="text-slate-500">角色 ID 列表</div><div class="mt-1 font-medium text-slate-950">[1, 2]</div></div>
+        <div class="rounded-xl bg-slate-50 p-4"><div class="text-slate-500">登录 IP</div><div class="mt-1 font-medium text-slate-950">127.0.0.1</div></div>
+        <div class="rounded-xl bg-slate-50 p-4"><div class="text-slate-500">密码更新时间</div><div class="mt-1 font-medium text-slate-950">2026-04-28 22:10</div></div>
+      </div>
+      <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">敏感字段提示：详情接口不得返回密码、Token 密钥等敏感信息。</div>
+    </div>
+  </div>
+
+  <div id="importModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" onclick="closeImportModal()"></div>
+    <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-soft">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-950">用户 Excel 批量导入</h2>
+        <button class="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onclick="closeImportModal()">✕</button>
+      </div>
+      <div class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+        <div class="text-4xl">📄</div>
+        <p class="mt-3 text-sm text-slate-600">拖拽 Excel 文件到此处，或点击上传</p>
+        <button class="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50" onclick="showToast('导入模板下载示意')">下载导入模板</button>
+      </div>
+      <p class="mt-4 text-xs leading-6 text-slate-500">模板字段包含：用户名、密码、昵称、邮箱、手机号、头像、性别、状态、部门 ID、备注、角色 ID 集合。</p>
+    </div>
+  </div>
+
+  <script>
+    let confirmAction = null;
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+      toastText.textContent = message;
+      toast.className = `fixed right-6 top-6 z-[80] rounded-xl border bg-white px-4 py-3 text-sm shadow-soft ${type === 'error' ? 'border-rose-200 text-rose-700' : 'border-emerald-200 text-emerald-700'}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2600);
+    }
+
+    function openUserModal(title = '新增用户') {
+      document.querySelector('#userModal h2').textContent = title;
+      document.getElementById('userModal').classList.remove('hidden');
+      document.getElementById('userModal').classList.add('flex');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+      document.getElementById('userModal').classList.remove('flex');
+    }
+
+    function saveUser() {
+      const form = document.getElementById('userForm');
+      const username = form.username.value.trim();
+      const password = form.password.value.trim();
+      const nickname = form.nickname.value.trim();
+      const email = form.email.value.trim();
+      const phone = form.phone.value.trim();
+      const dept = form.dept.value;
+      const roles = [...form.querySelectorAll('input[name="roleIds"]:checked')];
+      let valid = true;
+      clearValidation();
+      if (!username || username === 'admin') valid = markInvalid('username');
+      if (password.length < 8) valid = markInvalid('password');
+      if (!nickname) valid = markInvalid('nickname');
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) valid = markInvalid('email');
+      if (phone && !/^1\d{10}$/.test(phone)) valid = markInvalid('phone');
+      if (!dept) valid = markInvalid('dept');
+      if (roles.length === 0) valid = markInvalid('roles');
+      if (!valid) {
+        showToast('表单校验失败：请检查必填项、唯一用户名、邮箱和手机号格式。', 'error');
+        return;
+      }
+      closeUserModal();
+      showToast('保存成功：用户已创建，角色关联已去重保存。');
+    }
+
+    function markInvalid(field) {
+      document.querySelector(`[data-field="${field}"]`).classList.add('invalid');
+      return false;
+    }
+
+    function clearValidation() {
+      document.querySelectorAll('.form-field').forEach(field => field.classList.remove('invalid'));
+    }
+
+    function toggleAdvancedFilter() {
+      const panel = document.getElementById('advancedFilter');
+      const btn = document.getElementById('toggleFilterBtn');
+      panel.classList.toggle('hidden');
+      btn.textContent = panel.classList.contains('hidden') ? '展开高级筛选' : '收起高级筛选';
+    }
+
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.checked = checked;
+        checkbox.closest('tr').classList.toggle('table-row-selected', checked);
+      });
+      updateSelectedCount();
+    }
+
+    function updateBatchState(checkbox) {
+      checkbox.closest('tr').classList.toggle('table-row-selected', checkbox.checked);
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('.row-checkbox:checked').length;
+      document.getElementById('selectedCount').textContent = count;
+      document.getElementById('batchDeleteBtn').classList.toggle('opacity-50', count === 0);
+    }
+
+    function confirmBatchDelete() {
+      const count = document.querySelectorAll('.row-checkbox:checked').length;
+      if (!count) {
+        showToast('请至少选择一条数据', 'error');
+        return;
+      }
+      openConfirmModal('确认删除所选数据吗？', `将对 ${count} 条用户记录执行逻辑删除，仅更新 deleted=1。`, () => showToast('批量删除成功，已逻辑删除所选用户。'));
+    }
+
+    function confirmDelete(username) {
+      openConfirmModal('确认删除用户吗？', `确认删除用户 ${username} 吗？删除将采用逻辑删除，仅更新 deleted 标记。`, () => showToast(`用户 ${username} 已逻辑删除。`));
+    }
+
+    function confirmResetPassword() {
+      openConfirmModal('确认重置密码吗？', '管理员重置密码属于高风险操作，将触发密码策略校验和通知流程。', () => showToast('密码重置成功，已生成通知示意。'));
+    }
+
+    function openConfirmModal(title, text, action) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmText').textContent = text;
+      confirmAction = action;
+      document.getElementById('confirmModal').classList.remove('hidden');
+      document.getElementById('confirmModal').classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModal').classList.add('hidden');
+      document.getElementById('confirmModal').classList.remove('flex');
+    }
+
+    function runConfirmAction() {
+      closeConfirmModal();
+      if (confirmAction) confirmAction();
+    }
+
+    function toggleStatus(button) {
+      const enabled = button.textContent.trim() === '启用';
+      button.textContent = enabled ? '禁用' : '启用';
+      button.className = enabled
+        ? 'rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600'
+        : 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700';
+      showToast(enabled ? '已停用用户，禁用用户不得登录系统。' : '已启用用户。');
+    }
+
+    function showLoadingState() {
+      document.getElementById('loadingState').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('loadingState').classList.add('hidden');
+        showToast('查询完成：已按筛选条件刷新列表。');
+      }, 900);
+    }
+
+    function openDetailModal(username) {
+      document.getElementById('detailUsername').textContent = username;
+      document.getElementById('detailModal').classList.remove('hidden');
+      document.getElementById('detailModal').classList.add('flex');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+      document.getElementById('detailModal').classList.remove('flex');
+    }
+
+    function openEditHint() {
+      showToast('编辑弹窗示意：编辑时用户名和密码不可修改。');
+      openUserModal('编辑用户');
+    }
+
+    function openRoleModal() {
+      showToast('分配角色示意：提交 roleIds 后去重并重建用户角色关联。');
+      openUserModal('分配角色');
+    }
+
+    function openImportModal() {
+      document.getElementById('importModal').classList.remove('hidden');
+      document.getElementById('importModal').classList.add('flex');
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.add('hidden');
+      document.getElementById('importModal').classList.remove('flex');
+    }
+  </script>
+</body>
+</html>
