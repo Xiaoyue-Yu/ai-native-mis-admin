@@ -1,4 +1,4 @@
-# AGENTS.md - MIS系统管理模块
+﻿# AGENTS.md - MIS系统管理模块
 
 ## 项目概述
 本项目是基于 Spring Boot 3 + Vue3 的 MIS系统管理模块，采用
@@ -29,6 +29,11 @@ Harness Engineering 方法论进行开发。系统涵盖用户管理、
 - 生成项目脚手架、数据库迁移脚本
 - 创建基础实体类、工具类
 
+### Requirement Agent
+- 利用 `requirement-clarifier` 技能进行需求澄清，明确目标用户、范围边界、业务流程、数据口径与约束条件
+- 产出分章节的 Markdown 需求文档（按模块/场景/流程拆分，便于评审与迭代）
+- 利用 `frontend-design` 技能生成 HTML 页面原型（关键页面结构、交互流与组件布局）
+
 ### Coding Agent
 - 根据 feature_list.json 执行具体功能开发
 - 调用 Sub-agent 完成特定任务
@@ -39,6 +44,7 @@ Harness Engineering 方法论进行开发。系统涵盖用户管理、
 2. 使用 feature_list.json 跟踪进度
 3. 每完成一个 feature，更新 status 字段
 4. 跨会话传递关键上下文信息
+5. 在需求分析阶段，必须严格遵循 `.codex/workflows/product-workflows.md` 定义的 SOP
 
 ## Sub-agent 定义
 
@@ -51,6 +57,16 @@ Harness Engineering 方法论进行开发。系统涵盖用户管理、
 - 用途: 处理权限相关逻辑
 - 输入: 模块名、操作类型
 - 输出: 权限标识、数据范围过滤
+
+### Requirement Clarifier（需求澄清专家）
+- 用途: 使用 `requirement-clarifier` 进行澄清与结构化需求输出
+- 输入: 业务目标、现状痛点、角色与权限、关键流程、数据字典/口径、非功能需求
+- 输出: 分章节 Markdown 需求文档（含范围、用户故事/用例、流程、验收标准、风险与假设）
+
+### UI/UX Designer（前端原型专家）
+- 用途: 使用 `frontend-design` 生成可评审的页面原型与交互说明
+- 输入: 页面清单、路由/菜单结构、字段与校验规则、交互状态（空/加载/错误/权限）
+- 输出: HTML 页面原型（页面布局、组件结构、交互流说明，可直接用于产品评审）
 
 ### Test Agent
 - 用途: 生成单元测试
